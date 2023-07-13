@@ -1,6 +1,12 @@
 import pickle
 from matplotlib import pyplot as plt
 import numpy as np
+from scipy.special import logsumexp
+
+def compute_ess(logw):
+  """Compute Effective Sample Size (ESS) using log importance weights."""
+  return 1 / np.exp(logsumexp(2 * (logw - logsumexp(logw))))
+
 def save(obj, filename):
     """Save compiled models for reuse."""
     with open(filename, 'wb') as f:
