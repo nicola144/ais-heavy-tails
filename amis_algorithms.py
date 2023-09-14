@@ -22,21 +22,21 @@ def AMIS_student_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde,
     mu_current = mu_initial
     shape_current = shape_initial
 
-    if D == 2:
-        nb_points = 100
-        X = np.linspace(-10, 10, nb_points)
-        Y = np.linspace(-10, 10, nb_points)
+    # if D == 2:
+    #     nb_points = 100
+    #     X = np.linspace(-10, 10, nb_points)
+    #     Y = np.linspace(-10, 10, nb_points)
 
 
-        pdf = np.zeros((nb_points, nb_points))
-        for i in range(nb_points):
-            for j in range(nb_points):
-                pdf[i,j] = np.exp(log_pi_tilde([X[i], Y[j]]))
+    #     pdf = np.zeros((nb_points, nb_points))
+    #     for i in range(nb_points):
+    #         for j in range(nb_points):
+    #             pdf[i,j] = np.exp(log_pi_tilde([X[i], Y[j]]))
 
-        # plot
-        pdf = (1 / sum(pdf)) * pdf
-        fig, ax = plt.subplots()
-        ax.contour(X, Y, pdf)
+    #     # plot
+    #     pdf = (1 / sum(pdf)) * pdf
+    #     fig, ax = plt.subplots()
+    #     ax.contour(X, Y, pdf)
     
     # Iterations
     for t in range(n_iterations):
@@ -101,13 +101,15 @@ def AMIS_student_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde,
         for tau in range(t+1):
             for m in range(M):
                 w = np.exp(updated_normalized_logweights[tau, m])
-                first_moment += w * samples_up_to_now[t, m, :]
-                secnd_moment += w * (samples_up_to_now[t, m, :].reshape(-1, 1) @ samples_up_to_now[t, m, :].reshape(1, -1))
+                first_moment += w * samples_up_to_now[tau, m, :]
+                secnd_moment += w * (samples_up_to_now[tau, m, :].reshape(-1, 1) @ samples_up_to_now[tau, m, :].reshape(1, -1))
 
         
         mu_current = first_moment
         shape_current = ((dof_proposal - 2) / dof_proposal) * (secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1)))
+        
     
+
     return all_estimate_Z, all_alphaESS, all_ESS
 
 
@@ -198,8 +200,8 @@ def alpha_AMIS_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, d
         for tau in range(t+1):
             for m in range(M):
                 w = np.exp(updated_normalized_escort_logweights[tau, m])
-                first_moment += w * samples_up_to_now[t, m, :]
-                secnd_moment += w * (samples_up_to_now[t, m, :].reshape(-1, 1) @ samples_up_to_now[t, m, :].reshape(1, -1))
+                first_moment += w * samples_up_to_now[tau, m, :]
+                secnd_moment += w * (samples_up_to_now[tau, m, :].reshape(-1, 1) @ samples_up_to_now[tau, m, :].reshape(1, -1))
 
         
         mu_current = first_moment
