@@ -16,6 +16,25 @@ def load(filename):
     """Reload compiled models for reuse."""
     return pickle.load(open(filename, 'rb'))
 
+def safe_gp_optimization(
+        bo_model, lower_bound_var=1e-05, upper_bound_var=2.0, bound_len=20.0
+    ):
+        if bo_model.model.kern.variance[0] < lower_bound_var:
+            print("safe optimization: resetting kernel var")
+            bo_model.model.kern.variance[0] = 1.0
+
+        if bo_model.model.kern.lengthscale[0] > bound_len:
+            print("safe optimization: resetting kernel lengthscale")
+            bo_model.model.kern.lengthscale[0] = 1.0
+
+        if bo_model.model.likelihood.variance[0] > upper_bound_var:
+            print("safe optimization: resetting lik var")
+            bo_model.model.likelihood.variance[0] = upper_bound_var
+
+        if bo_model.model.likelihood.variance[0] < lower_bound_var:
+            print("safe optimization: resetting lik var")
+            bo_model.model.likelihood.variance[0] = 1.
+
 
 def plot_contour_lines(dist1, dist2, iteration=0):
     # Generate a grid of points
