@@ -124,7 +124,7 @@ def alpha_AMIS_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, d
     evaluations_target_logpdf = np.empty((n_iterations,M))
     mixture_denominator_evaluations = np.empty((n_iterations,M))
     proposals_over_iterations = []
-    # Statistics to track
+
     all_estimate_Z = np.empty(n_iterations)
     all_ESS = np.empty(n_iterations)
     all_alphaESS = np.empty(n_iterations)
@@ -208,4 +208,4 @@ def alpha_AMIS_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, d
         shape_current =  secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
         
         
-    return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
+    return all_estimate_Z, all_alphaESS, all_ESS
