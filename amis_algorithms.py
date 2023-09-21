@@ -133,10 +133,9 @@ def alpha_AMIS_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, d
     shape_current = shape_initial
     
     # Iterations
-    for t in range(n_iterations):
+    for t in tqdm(range(n_iterations)):
         # print(mu_current)
         # print(shape_current)
-
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
         proposals_over_iterations.append(current_proposal)
 
@@ -175,7 +174,6 @@ def alpha_AMIS_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, d
         estimate_Z = np.exp(logsumexp_logweights) / (M*(t+1)) # weights need to have only pi_tilde in the numerator (no escort) 
         all_estimate_Z[t] = estimate_Z
 
-        
         ### metrics 
         current_only_logweights = evaluations_target_logpdf[t,:] - current_only_log_denominator 
         current_only_normalized_logweights = current_only_logweights - logsumexp(current_only_logweights) 
