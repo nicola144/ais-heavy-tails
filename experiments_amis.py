@@ -18,8 +18,8 @@ def run_AMIS(nb_runs, n_iterations, dof_proposal, M, d, alg, sigmaSq_init, log_p
         mu_initial = np.random.uniform(-5, 5, d)
         shape_initial = sigmaSq_init * np.eye(d)
 
-        all_estimate_Z, all_alphaESS, all_ESS = alg(mu_initial, shape_initial, n_iterations, log_pi_tilde, dof_proposal,
-                                                    M, d)
+        all_estimate_Z, all_alphaESS, all_ESS = alg(mu_initial=mu_initial, shape_initial=shape_initial, n_iterations=n_iterations, log_pi_tilde=log_pi_tilde, dof_proposal=dof_proposal,
+                                                    M=M, D=d)
 
         SE_Z = np.empty(n_iterations)
         for n in range(n_iterations):
@@ -64,14 +64,14 @@ for d in d_collect:
     log_pi_tilde = partial(unnormalized_logpdf_Student, dof=dof_targ, loc=loc_targ, inv_shape=inv_shape_targ)
     target_name = "dof" + str(dof_targ) + "_d" + str(d)
 
-    if not os.path.exists('./' + target_name):
-        os.mkdir('./' + target_name)
+    if not os.path.exists('./results/' + target_name):
+        os.mkdir('./results/' + target_name)
 
-    if not os.path.exists('./' + target_name + '/AMIS'):
-        os.mkdir('./' + target_name + '/AMIS')
+    if not os.path.exists('./results/' + target_name + '/AMIS'):
+        os.mkdir('./results/' + target_name + '/AMIS')
 
-    if not os.path.exists('./' + target_name + '/escortAMIS'):
-        os.mkdir('./' + target_name + '/escortAMIS')
+    if not os.path.exists('./results/' + target_name + '/escortAMIS'):
+        os.mkdir('./results/' + target_name + '/escortAMIS')
 
     fig = plt.figure()
     plt.semilogy()
@@ -79,31 +79,46 @@ for d in d_collect:
 
     for dof_prop in dof_proposal_collect:
 
-        if dof_prop > 2:
-            mean_MSE_Z_AMIS, mean_ESS_AMIS, mean_alphaESS_AMIS, std_MSE_Z_AMIS, std_ESS_AMIS, std_alphaESS_AMIS = run_AMIS(
-                nb_runs, nb_iterations, dof_prop, M, d, AMIS_student_fixed_dof, sigmaSq_init, log_pi_tilde, Z_target)
+        # if dof_prop > 2:
+        #     mean_MSE_Z_AMIS, mean_ESS_AMIS, mean_alphaESS_AMIS, std_MSE_Z_AMIS, std_ESS_AMIS, std_alphaESS_AMIS = run_AMIS(
+        #         nb_runs, nb_iterations, dof_prop, M, d, AMIS_student_fixed_dof, sigmaSq_init, log_pi_tilde, Z_target)
+        #
+        #     np.savetxt('./results/' + target_name + "/AMIS/dof" + str(dof_prop) + "_MSE_Z_m.txt", mean_MSE_Z_AMIS)
+        #     np.savetxt('./results/' + target_name + "/AMIS/dof" + str(dof_prop) + "_ESS_m.txt", mean_ESS_AMIS)
+        #     np.savetxt('./results/' + target_name + "/AMIS/dof" + str(dof_prop) + "_alphaESS_m.txt", mean_alphaESS_AMIS)
+        #     np.savetxt('./results/' + target_name + "/AMIS/dof" + str(dof_prop) + "_MSE_Z_std.txt", std_MSE_Z_AMIS)
+        #     np.savetxt('./results/' + target_name + "/AMIS/dof" + str(dof_prop) + "_ESS_std.txt", std_ESS_AMIS)
+        #     np.savetxt('./results/' + target_name + "/AMIS/dof" + str(dof_prop) + "_alphaESS_std.txt", std_alphaESS_AMIS)
+        #
+        #     plt.plot(iterations, mean_MSE_Z_AMIS, label="AMIS, dof=" + str(dof_prop))
 
-            np.savetxt('./' + target_name + "/AMIS/dof" + str(dof_prop) + "_MSE_Z_m.txt", mean_MSE_Z_AMIS)
-            np.savetxt('./' + target_name + "/AMIS/dof" + str(dof_prop) + "_ESS_m.txt", mean_ESS_AMIS)
-            np.savetxt('./' + target_name + "/AMIS/dof" + str(dof_prop) + "_alphaESS_m.txt", mean_alphaESS_AMIS)
-            np.savetxt('./' + target_name + "/AMIS/dof" + str(dof_prop) + "_MSE_Z_std.txt", std_MSE_Z_AMIS)
-            np.savetxt('./' + target_name + "/AMIS/dof" + str(dof_prop) + "_ESS_std.txt", std_ESS_AMIS)
-            np.savetxt('./' + target_name + "/AMIS/dof" + str(dof_prop) + "_alphaESS_std.txt", std_alphaESS_AMIS)
+        # mean_MSE_Z_escortAMIS, mean_ESS_escortAMIS, mean_alphaESS_escortAMIS, std_MSE_Z_escortAMIS, std_ESS_escortAMIS, std_alphaESS_escortAMIS = run_AMIS(
+        #     nb_runs, nb_iterations, dof_prop, M, d, alpha_AMIS_fixed_dof, sigmaSq_init, log_pi_tilde, Z_target)
+        #
+        # np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_MSE_Z_m.txt", mean_MSE_Z_escortAMIS)
+        # np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_ESS_m.txt", mean_ESS_escortAMIS)
+        # np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_alphaESS_m.txt", mean_alphaESS_escortAMIS)
+        # np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_MSE_Z_std.txt", std_MSE_Z_escortAMIS)
+        # np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_ESS_std.txt", std_ESS_escortAMIS)
+        # np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_alphaESS_std.txt",
+        #            std_alphaESS_escortAMIS)
+        #
+        # plt.plot(iterations, mean_MSE_Z_escortAMIS, label="escort AMIS, dof=" + str(dof_prop))
 
-            plt.plot(iterations, mean_MSE_Z_AMIS, label="AMIS, dof=" + str(dof_prop))
 
         mean_MSE_Z_escortAMIS, mean_ESS_escortAMIS, mean_alphaESS_escortAMIS, std_MSE_Z_escortAMIS, std_ESS_escortAMIS, std_alphaESS_escortAMIS = run_AMIS(
-            nb_runs, nb_iterations, dof_prop, M, d, alpha_AMIS_fixed_dof, sigmaSq_init, log_pi_tilde, Z_target)
+            nb_runs, nb_iterations, dof_prop, M, d, alpha_AMIS_adapted_dof, sigmaSq_init, log_pi_tilde, Z_target)
 
-        np.savetxt('./' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_MSE_Z_m.txt", mean_MSE_Z_escortAMIS)
-        np.savetxt('./' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_ESS_m.txt", mean_ESS_escortAMIS)
-        np.savetxt('./' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_alphaESS_m.txt", mean_alphaESS_escortAMIS)
-        np.savetxt('./' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_MSE_Z_std.txt", std_MSE_Z_escortAMIS)
-        np.savetxt('./' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_ESS_std.txt", std_ESS_escortAMIS)
-        np.savetxt('./' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_alphaESS_std.txt",
+        np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_MSE_Z_m.txt", mean_MSE_Z_escortAMIS)
+        np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_ESS_m.txt", mean_ESS_escortAMIS)
+        np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_alphaESS_m.txt", mean_alphaESS_escortAMIS)
+        np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_MSE_Z_std.txt", std_MSE_Z_escortAMIS)
+        np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_ESS_std.txt", std_ESS_escortAMIS)
+        np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_alphaESS_std.txt",
                    std_alphaESS_escortAMIS)
 
         plt.plot(iterations, mean_MSE_Z_escortAMIS, label="escort AMIS, dof=" + str(dof_prop))
+
 
     plt.legend()
     plt.savefig("./" + target_name + "/MSE_Z.pdf")

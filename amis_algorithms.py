@@ -1,11 +1,13 @@
+import numpy as np
+
 from utils import *
 
 from tqdm import tqdm
 from scipy.special import logsumexp
 from scipy.stats import multivariate_normal, multivariate_t, random_correlation
-from emukit.core.loop import UserFunctionWrapper
-from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
-from emukit.core.loop import UserFunctionResult
+# from emukit.core.loop import UserFunctionWrapper
+# from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
+# from emukit.core.loop import UserFunctionResult
 from emukit.bayesian_optimization.loops import BayesianOptimizationLoop
 
 from emukit.core import ContinuousParameter, InformationSourceParameter, ParameterSpace
@@ -15,8 +17,7 @@ from emukit.model_wrappers import GPyModelWrapper
 from emukit.bayesian_optimization.acquisitions import ExpectedImprovement, MaxValueEntropySearch, NegativeLowerConfidenceBound
 import GPy
 from emukit.core.initial_designs.latin_design import LatinDesign
-
-
+from functools import partial
 
 def AMIS_student_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, dof_proposal, M, D):
     
@@ -221,9 +222,11 @@ def alpha_AMIS_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, d
     return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
 
 
-def alpha_AMIS_adapted_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, dof_proposal, M, D):
+def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_iterations=None, log_pi_tilde=None, M=None, D=None, bayesopt_mode=False):
 
     alpha = 1 + 2 / (dof_proposal + D)  # to be used for computation of the alpha-ESS
+
+    dof_proposal = np.array([dof_proposal])
 
     all_samples = np.empty((n_iterations, M, D))
     evaluations_target_logpdf = np.empty((n_iterations, M))
@@ -256,11 +259,11 @@ def alpha_AMIS_adapted_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde,
     latin_design = LatinDesign(dof_proposal_space)
     initial_dof_points = latin_design.get_samples(num_initial_dof_points)
 
-    max_bo_iterations = 30
+    max_bo_iterations = 15
 
     # Iterations
     for t in tqdm(range(n_iterations)):
-        current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal_initial)
+        current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal.item())
         proposals_over_iterations.append(current_proposal)
 
         # Draw M samples from current proposal
@@ -334,18 +337,20 @@ def alpha_AMIS_adapted_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde,
         ##########
         # Now optimize dof !
 
-        if t <= num_initial_dof_points :
+        if t < num_initial_dof_points :
             dof_proposal = initial_dof_points[t]
         else:
             # Inefficient: creating model every time, should be updated
-            gpy_model = GPy.models.GPRegression(X=observed_dof, Y=observed_ess)
+            gpy_model = GPy.models.GPRegression(X=np.concatenate(np.asarray(observed_dof)).reshape(-1,1), Y=np.asarray(observed_ess).reshape(-1,1))
             emukit_model = GPyModelWrapper(gpy_model)
             acquisition = acquisition_functions['EI'](emukit_model)
             bayesopt_loop = BayesianOptimizationLoop(model=emukit_model, space=dof_proposal_space,
                                                      acquisition=acquisition, batch_size=1)
 
+            f = partial(alpha_AMIS_adapted_dof, mu_initial=mu_current, shape_initial=shape_current, n_iterations=1, log_pi_tilde=log_pi_tilde, M=M, D=D, bayesopt_mode=True)
+            bayesopt_loop.run_loop(f, max_bo_iterations)
 
-            bayesopt_loop.run_loop(observed_ess, max_bo_iterations)
+            gpy_model.plot()
 
             results = bayesopt_loop.get_results()
 
@@ -353,4 +358,12 @@ def alpha_AMIS_adapted_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde,
         mu_current = np.einsum('tmd,tm->d', samples_up_to_now, W)
         secnd_moment = np.einsum('tm, tmd, tme -> de', W, samples_up_to_now, samples_up_to_now)
         shape_current = secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
+
+
+    if bayesopt_mode:
+        return np.asarray(all_alphaESS[-1]).reshape(-1,1)
+    else:
+        return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current,
+                                                                     df=dof_proposal)
+
 
