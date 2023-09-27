@@ -3,7 +3,6 @@ from amis_algorithms import *
 import os
 from functools import partial
 
-
 def run_AMIS(nb_runs, n_iterations, dof_proposal, M, d, alg, sigmaSq_init, log_pi_tilde, Z_target):
     MSE_Z = np.empty((nb_runs, n_iterations))
     ESS = np.empty((nb_runs, n_iterations))
@@ -47,10 +46,10 @@ def run_AMIS(nb_runs, n_iterations, dof_proposal, M, d, alg, sigmaSq_init, log_p
 d_collect = [2]
 dof_targ = 3
 cond_number = 2
-dof_proposal_collect = [1, 3, 10]
+dof_proposal_collect = [1]
 
 sigmaSq_init = 5
-M = 10000
+M = 20000
 nb_runs = 50
 nb_iterations = 20
 
@@ -77,6 +76,8 @@ for d in d_collect:
     plt.semilogy()
     iterations = range(nb_iterations)
 
+    print('Target dof', dof_targ)
+
     for dof_prop in dof_proposal_collect:
 
         # if dof_prop > 2:
@@ -91,7 +92,7 @@ for d in d_collect:
         #     np.savetxt('./results/' + target_name + "/AMIS/dof" + str(dof_prop) + "_alphaESS_std.txt", std_alphaESS_AMIS)
         #
         #     plt.plot(iterations, mean_MSE_Z_AMIS, label="AMIS, dof=" + str(dof_prop))
-
+        #
         # mean_MSE_Z_escortAMIS, mean_ESS_escortAMIS, mean_alphaESS_escortAMIS, std_MSE_Z_escortAMIS, std_ESS_escortAMIS, std_alphaESS_escortAMIS = run_AMIS(
         #     nb_runs, nb_iterations, dof_prop, M, d, alpha_AMIS_fixed_dof, sigmaSq_init, log_pi_tilde, Z_target)
         #
@@ -108,6 +109,8 @@ for d in d_collect:
 
         mean_MSE_Z_escortAMIS, mean_ESS_escortAMIS, mean_alphaESS_escortAMIS, std_MSE_Z_escortAMIS, std_ESS_escortAMIS, std_alphaESS_escortAMIS = run_AMIS(
             nb_runs, nb_iterations, dof_prop, M, d, alpha_AMIS_adapted_dof, sigmaSq_init, log_pi_tilde, Z_target)
+
+        sys.exit(0)
 
         np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_MSE_Z_m.txt", mean_MSE_Z_escortAMIS)
         np.savetxt('./results/' + target_name + "/escortAMIS/dof" + str(dof_prop) + "_ESS_m.txt", mean_ESS_escortAMIS)
