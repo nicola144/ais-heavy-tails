@@ -241,7 +241,7 @@ def alpha_AMIS_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde, 
     shape_current = shape_initial
 
     # Iterations
-    for t in tqdm(range(n_iterations)):
+    for t in range(n_iterations):
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
         proposals_over_iterations.append(current_proposal)
 

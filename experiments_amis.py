@@ -2,13 +2,14 @@ from synthetic_targets import *
 from amis_algorithms import *
 import os
 from functools import partial
+from tqdm import tqdm
 
 def run_AMIS_real_dataset(nb_runs, n_iterations, dof_proposal, M, d, alg, mu_initial, shape_initial, log_pi_tilde):
     all_est_Z = np.empty((nb_runs, n_iterations))
     ESS = np.empty((nb_runs, n_iterations))
     alphaESS = np.empty((nb_runs, n_iterations))
 
-    for i in range(nb_runs):
+    for i in tqdm(range(nb_runs)):
 
         all_estimate_Z, all_alphaESS, all_ESS, adapted_proposal = alg(mu_initial=mu_initial, shape_initial=shape_initial, n_iterations=n_iterations, log_pi_tilde=log_pi_tilde, dof_proposal=dof_proposal,
                                                     M=M, D=d)
