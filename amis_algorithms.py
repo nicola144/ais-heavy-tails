@@ -217,12 +217,12 @@ def AMIS_student_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
         # Standard moment matching
         W = np.exp(updated_normalized_logweights)
         mu_current = np.einsum('tmd,tm->d', samples_up_to_now, W)
-        secnd_moment = ((dof_proposal - 2) / dof_proposal) * np.einsum('tm, tmd, tme -> de', W, samples_up_to_now,
+        secnd_moment = np.einsum('tm, tmd, tme -> de', W, samples_up_to_now,
                                                                        samples_up_to_now)
         shape_current = ((dof_proposal - 2) / dof_proposal) * (
                     secnd_moment - mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
 
-    return all_estimate_Z, all_alphaESS, all_ESS
+    return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
 
 
 def alpha_AMIS_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde, dof_proposal, M, D):
@@ -482,7 +482,7 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None, shape_initial=None, n_
             dof_proposal = x_new.item()
 
 
-            gpy_model.plot()
+            # gpy_model.plot()
 
             plt.show()
 
@@ -491,5 +491,4 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None, shape_initial=None, n_
         secnd_moment = np.einsum('tm, tmd, tme -> de', W, samples_up_to_now, samples_up_to_now)
         shape_current = secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
 
-    print('Final dof', dof_proposal)
-    return all_estimate_Z, all_alphaESS, all_ESS
+    return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)

@@ -26,7 +26,7 @@ def run_AMIS_real_dataset(nb_runs, n_iterations, dof_proposal, M, d, alg, mu_ini
     std_ESS = ESS.std(0)
     std_alphaESS = alphaESS.std(0)
 
-    return mean_Z, std_Z, mean_ESS, mean_alphaESS, std_ESS, std_alphaESS
+    return mean_Z, std_Z, mean_ESS, mean_alphaESS, std_ESS, std_alphaESS, adapted_proposal
 
 def run_AMIS(nb_runs, n_iterations, dof_proposal, M, d, alg, sigmaSq_init, log_pi_tilde, Z_target):
     MSE_Z = np.empty((nb_runs, n_iterations))
