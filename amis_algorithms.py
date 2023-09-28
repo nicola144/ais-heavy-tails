@@ -223,9 +223,7 @@ def alpha_AMIS_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, d
     return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
 
 
-def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_iterations=None, log_pi_tilde=None, M=None, D=None, bayesopt_mode=False):
-
-    alpha = 1 + 2 / (dof_proposal + D)  # to be used for computation of the alpha-ESS
+def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_iterations=None, log_pi_tilde=None, M=None, D=None):
 
     dof_proposal = np.array([dof_proposal])
 
@@ -250,6 +248,7 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
     dof_proposal_space = ParameterSpace([ContinuousParameter('dof_proposal', 1, 10)])
     num_initial_dof_points = 5
 
+
     observed_dof = []
     observed_ess = []
 
@@ -260,12 +259,11 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
     latin_design = LatinDesign(dof_proposal_space)
     initial_dof_points = latin_design.get_samples(num_initial_dof_points)
 
-    max_bo_iterations = 15
-
     # Iterations
-    for t in tqdm(range(n_iterations)):
-        print(t)
-        print(dof_proposal)
+    for t in range(n_iterations):
+        
+        alpha = 1 + 2 / (dof_proposal.item() + D)
+
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal.item())
         proposals_over_iterations.append(current_proposal)
 
@@ -321,7 +319,6 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
         all_alphaESS[t] = (1 / M) * current_only_alphaESS
         all_ESS[t] = (1 / M) * current_only_ESS
 
-
         # first_moment = np.zeros(D)
         # secnd_moment = np.zeros((D,D))
 
@@ -334,36 +331,38 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
         # mu_current = first_moment
         # shape_current =  secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
 
-        if t>0:
-            observed_dof.append(dof_proposal)
-            observed_ess.append(-(1 / M) * current_only_alphaESS)
 
         ##########
         # Now optimize dof !
 
-        if 0 < t < num_initial_dof_points :
-            dof_proposal = initial_dof_points[t]
-        elif 0 < t:
-            # Inefficient: creating model every time, should be updated
-            gpy_model = GPy.models.GPRegression(X=np.concatenate(np.asarray(observed_dof)).reshape(-1,1), Y=np.asarray(observed_ess).reshape(-1,1))
-            emukit_model = GPyModelWrapper(gpy_model)
-            acquisition = acquisition_functions['LCB'](emukit_model)
-            
+        if t>0:
+            observed_dof.append(dof_proposal)
+            observed_ess.append(np.log(1 -(1 / M) * current_only_alphaESS))
 
-            optimizer = GradientAcquisitionOptimizer(dof_proposal_space)
-            x_new, _ = optimizer.optimize(acquisition)
-            dof_proposal = x_new
+            if t < num_initial_dof_points :
+                dof_proposal = initial_dof_points[t]
+            else:
+                # Inefficient: creating model every time, should be updated
+                gpy_model = GPy.models.GPRegression(X=np.concatenate(np.asarray(observed_dof)).reshape(-1,1), Y=np.asarray(observed_ess).reshape(-1,1))
+                
+                # gpy_model.kern.lengthscale.fix(0.5) #dummy values for now
+                # gpy_model.kern.variance.fix(1e-1)
+                # gpy_model.likelihood.variance.fix(1e-1)
 
-            # bayesopt_loop = BayesianOptimizationLoop(model=emukit_model, space=dof_proposal_space,
-            #                                          acquisition=acquisition, batch_size=1)
+                gpy_model.plot()
+                plt.show()
+                
+                emukit_model = GPyModelWrapper(gpy_model)
 
-            # f = partial(alpha_AMIS_adapted_dof, mu_initial=mu_current, shape_initial=shape_current, n_iterations=1, log_pi_tilde=log_pi_tilde, M=M, D=D, bayesopt_mode=True)
-            # bayesopt_loop.run_loop(f, max_bo_iterations)
+                beta_param = 2 * np.log((t**2 + 1)*10 / np.sqrt(2*np.pi)) #from Garnett2023 p 229
+                
+                acquisition = acquisition_functions['LCB'](emukit_model, beta=beta_param) #high beta => exploration, while small beta => exploitation
+                
+                optimizer = GradientAcquisitionOptimizer(dof_proposal_space)
+                x_new, _ = optimizer.optimize(acquisition)
+                dof_proposal = x_new
 
-            # gpy_model.plot()
-
-            # results = bayesopt_loop.get_results()
-            
+        
 
         W = np.exp(updated_normalized_escort_logweights)
         mu_current = np.einsum('tmd,tm->d', samples_up_to_now, W)
@@ -371,10 +370,6 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
         shape_current = secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
 
 
-    if bayesopt_mode:
-        return np.asarray(all_alphaESS[-1]).reshape(-1,1)
-    else:
-        return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current,
-                                                                     df=dof_proposal)
+    return all_estimate_Z, all_alphaESS, all_ESS, observed_dof
 
 
