@@ -225,7 +225,7 @@ def alpha_AMIS_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, d
 
 def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_iterations=None, log_pi_tilde=None, M=None, D=None):
 
-    dof_proposal = np.array([dof_proposal])
+    
 
     all_samples = np.empty((n_iterations, M, D))
     evaluations_target_logpdf = np.empty((n_iterations, M))
@@ -244,13 +244,18 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
         'MES': MaxValueEntropySearch
     }
 
+          
+
+    gpy_model = None
+    emukit_model = None
+
     # Range DOF from 1 to 10
     dof_proposal_space = ParameterSpace([ContinuousParameter('dof_proposal', 1, 10)])
     num_initial_dof_points = 5
 
 
-    observed_dof = []
-    observed_ess = []
+    observed_dof = np.array([])
+    observed_ess = np.array([])
 
     mu_current = mu_initial
     shape_current = shape_initial
@@ -262,9 +267,10 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
     # Iterations
     for t in range(n_iterations):
         
-        alpha = 1 + 2 / (dof_proposal.item() + D)
+        alpha = 1 + 2 / (dof_proposal + D)
+        
 
-        current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal.item())
+        current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
         proposals_over_iterations.append(current_proposal)
 
         # Draw M samples from current proposal
@@ -336,23 +342,29 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
         # Now optimize dof !
 
         if t>0:
-            observed_dof.append(dof_proposal)
-            observed_ess.append(np.log(1 -(1 / M) * current_only_alphaESS))
+            
+            observed_dof = np.append(observed_dof, np.array([dof_proposal]), axis=0)
+            observed_ess = np.append(observed_ess, np.array([np.log(1 -(1 / M) * current_only_alphaESS)]), axis=0)
 
             if t < num_initial_dof_points :
-                dof_proposal = initial_dof_points[t]
+                dof_proposal = initial_dof_points[t].item()
             else:
-                # Inefficient: creating model every time, should be updated
-                gpy_model = GPy.models.GPRegression(X=np.concatenate(np.asarray(observed_dof)).reshape(-1,1), Y=np.asarray(observed_ess).reshape(-1,1))
-                
+                if gpy_model is None:
+                    #declare model
+                    gpy_model = GPy.models.GPRegression(observed_dof.reshape(-1,1), observed_ess.reshape(-1,1))
+                    emukit_model = GPyModelWrapper(gpy_model)
+          
+                else:
+                    emukit_model.set_data(observed_dof.reshape(-1,1), observed_ess.reshape(-1,1))#update
+
                 # gpy_model.kern.lengthscale.fix(0.5) #dummy values for now
                 # gpy_model.kern.variance.fix(1e-1)
                 # gpy_model.likelihood.variance.fix(1e-1)
 
-                gpy_model.plot()
-                plt.show()
+                # gpy_model.plot()
+                # plt.show()
                 
-                emukit_model = GPyModelWrapper(gpy_model)
+                
 
                 beta_param = 2 * np.log((t**2 + 1)*10 / np.sqrt(2*np.pi)) #from Garnett2023 p 229
                 
@@ -360,7 +372,10 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
                 
                 optimizer = GradientAcquisitionOptimizer(dof_proposal_space)
                 x_new, _ = optimizer.optimize(acquisition)
-                dof_proposal = x_new
+                
+                dof_proposal = x_new.item()
+                
+                
 
         
 
