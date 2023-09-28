@@ -149,7 +149,7 @@ def AMIS_student_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
     #     ax.contour(X, Y, pdf)
 
     # Iterations
-    for t in tqdm(range(n_iterations)):
+    for t in range(n_iterations):
 
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
         proposals_over_iterations.append(current_proposal)
@@ -162,6 +162,9 @@ def AMIS_student_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
         for m in range(M):
             evaluations_target_logpdf[t, m] = log_pi_tilde(
                 samples_current[m, :])  # log_pi_tilde may not be broasdact-compatible
+
+        ## Speedup since we know log_pi_tilde is broadcast compatible
+        # evaluations_target_logpdf[t,:] = log_pi_tilde(samples_current) # this adds to the existing list of target evaluations
 
         log_numerator = evaluations_target_logpdf[:t + 1, :]  # t+1 since including current ones !
 
@@ -251,6 +254,10 @@ def alpha_AMIS_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde, 
             evaluations_target_logpdf[t, m] = log_pi_tilde(
                 samples_current[m, :])  # log_pi_tilde may not be broasdact-compatible
 
+        ## Speedup since we know log_pi_tilde is broadcast compatible
+        # evaluations_target_logpdf[t,:] = log_pi_tilde(samples_current) # this adds to the existing list of target evaluations
+
+
         log_numerator = evaluations_target_logpdf[:t + 1, :]  # t+1 since including current ones !
 
         # Computing the DM weights in the denominator
@@ -311,7 +318,7 @@ def alpha_AMIS_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde, 
         secnd_moment = np.einsum('tm, tmd, tme -> de', W, samples_up_to_now, samples_up_to_now)
         shape_current = secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
 
-    return all_estimate_Z, all_alphaESS, all_ESS
+    return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
 
 
 def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None, shape_initial=None, n_iterations=None, log_pi_tilde=None,
@@ -439,8 +446,8 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None, shape_initial=None, n_
         if 0 < t < num_initial_dof_points:
             dof_proposal = initial_dof_points[t].item()
         elif 0 < t:
-            # Inefficient: creating model every time, should be updated
 
+            # Inefficient: creating model every time, should be updated
             gpy_model = GPy.models.GPRegression(X=np.asarray(observed_dof).reshape(-1, 1),
                                                 Y=np.asarray(observed_ess).reshape(-1, 1))
 
@@ -478,7 +485,6 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None, shape_initial=None, n_
             gpy_model.plot()
 
             plt.show()
-
 
         W = np.exp(updated_normalized_escort_logweights)
         mu_current = np.einsum('tmd,tm->d', samples_up_to_now, W)
