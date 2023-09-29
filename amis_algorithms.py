@@ -121,7 +121,7 @@ def AMIS_student_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde,
         # Standard moment matching
         W = np.exp(updated_normalized_logweights)
         mu_current = np.einsum('tmd,tm->d', samples_up_to_now, W)
-        secnd_moment = ((dof_proposal - 2) / dof_proposal) * np.einsum('tm, tmd, tme -> de', W, samples_up_to_now, samples_up_to_now)
+        secnd_moment = np.einsum('tm, tmd, tme -> de', W, samples_up_to_now, samples_up_to_now)
         shape_current = ((dof_proposal - 2) / dof_proposal) * ( secnd_moment - mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1) )
 
     return all_estimate_Z, all_alphaESS, all_ESS
@@ -147,7 +147,7 @@ def alpha_AMIS_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, d
     shape_current = shape_initial
     
     # Iterations
-    for t in tqdm(range(n_iterations)):
+    for t in range(n_iterations):
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
         proposals_over_iterations.append(current_proposal)
 
@@ -220,10 +220,10 @@ def alpha_AMIS_fixed_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, d
         secnd_moment =  np.einsum('tm, tmd, tme -> de', W, samples_up_to_now, samples_up_to_now)
         shape_current = secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
 
-    return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
+    return all_estimate_Z, all_alphaESS, all_ESS
 
 
-def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_iterations=None, log_pi_tilde=None, M=None, D=None):
+def alpha_AMIS_adapted_dof(mu_initial,shape_initial, n_iterations, log_pi_tilde, dof_proposal, M, D):
 
     
 
@@ -236,6 +236,7 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
     all_estimate_Z = np.empty(n_iterations)
     all_ESS = np.empty(n_iterations)
     all_alphaESS = np.empty(n_iterations)
+    all_dof = np.empty(n_iterations)
 
     # Map of available acquisition functions
     acquisition_functions = {
@@ -324,6 +325,7 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
 
         all_alphaESS[t] = (1 / M) * current_only_alphaESS
         all_ESS[t] = (1 / M) * current_only_ESS
+        all_dof[t] = dof_proposal
 
         # first_moment = np.zeros(D)
         # secnd_moment = np.zeros((D,D))
@@ -385,6 +387,6 @@ def alpha_AMIS_adapted_dof(dof_proposal, mu_initial=None,shape_initial=None, n_i
         shape_current = secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
 
 
-    return all_estimate_Z, all_alphaESS, all_ESS, observed_dof
+    return all_estimate_Z, all_alphaESS, all_ESS, all_dof
 
 
