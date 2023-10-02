@@ -5,9 +5,9 @@ from functools import partial
 from tqdm import tqdm
 
 def run_AMIS_real_dataset(nb_runs, n_iterations, dof_proposal, M, d, alg, mu_initial, shape_initial, log_pi_tilde):
-    all_est_Z = np.empty((nb_runs, n_iterations))
-    ESS = np.empty((nb_runs, n_iterations))
-    alphaESS = np.empty((nb_runs, n_iterations))
+    all_est_Z = np.empty((nb_runs,))
+    ESS = np.empty((nb_runs, ))
+    alphaESS = np.empty((nb_runs,))
 
     for i in tqdm(range(nb_runs)):
 
@@ -16,8 +16,8 @@ def run_AMIS_real_dataset(nb_runs, n_iterations, dof_proposal, M, d, alg, mu_ini
 
 
         all_est_Z[i, :] = all_estimate_Z[-1] # only last iteration
-        ESS[i, :] = all_ESS
-        alphaESS[i, :] = all_alphaESS
+        ESS[i, :] = all_ESS[-1]
+        alphaESS[i, :] = all_alphaESS[-1]
 
     mean_Z = all_est_Z.mean(0)
     std_Z = all_est_Z.std(0)
