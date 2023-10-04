@@ -15,9 +15,9 @@ def run_AMIS_real_dataset(nb_runs, n_iterations, dof_proposal, M, d, alg, mu_ini
                                                     M=M, D=d)
 
 
-        all_est_Z[i, :] = all_estimate_Z[-1] # only last iteration
-        ESS[i, :] = all_ESS[-1]
-        alphaESS[i, :] = all_alphaESS[-1]
+        all_est_Z[i] = all_estimate_Z[-1] # only last iteration
+        ESS[i] = all_ESS[-1]
+        alphaESS[i] = all_alphaESS[-1]
 
     mean_Z = all_est_Z.mean(0)
     std_Z = all_est_Z.std(0)

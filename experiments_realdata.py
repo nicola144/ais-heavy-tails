@@ -3,60 +3,12 @@ from amis_algorithms import *
 import os
 from functools import partial
 
-def run_AMIS(nb_runs, n_iterations, dof_proposal, M, d, alg, sigmaSq_init, log_pi_tilde, Z_target):
-    MSE_Z = np.empty((nb_runs, n_iterations))
-    ESS = np.empty((nb_runs, n_iterations))
-    alphaESS = np.empty((nb_runs, n_iterations))
-
-    # MSE_Z = np.zeros(n_iterations)
-    # ESS = np.zeros(n_iterations)
-    # alphaESS = np.zeros(n_iterations)
-
-    for i in range(nb_runs):
-
-        mu_initial = np.random.uniform(-5, 5, d)
-        shape_initial = sigmaSq_init * np.eye(d)
-
-        all_estimate_Z, all_alphaESS, all_ESS = alg(mu_initial=mu_initial, shape_initial=shape_initial, n_iterations=n_iterations, log_pi_tilde=log_pi_tilde, dof_proposal=dof_proposal,
-                                                    M=M, D=d)
-
-        SE_Z = np.empty(n_iterations)
-        for n in range(n_iterations):
-            SE_Z[n] = (all_estimate_Z[n] - Z_target) ** 2
-
-        # MSE_Z += (1/nb_runs)*SE_Z
-        # ESS += (1/nb_runs)*all_ESS
-        # alphaESS += (1/nb_runs)*all_alphaESS
-
-        MSE_Z[i, :] = SE_Z
-        ESS[i, :] = all_ESS
-        alphaESS[i, :] = all_alphaESS
-
-    mean_MSE_Z = MSE_Z.mean(0)
-    mean_ESS = ESS.mean(0)
-    mean_alphaESS = alphaESS.mean(0)
-
-    std_MSE_Z = MSE_Z.std(0)
-    std_ESS = ESS.std(0)
-    std_alphaESS = alphaESS.std(0)
-
-    return mean_MSE_Z, mean_ESS, mean_alphaESS, std_MSE_Z, std_ESS, std_alphaESS
-
-
 d_collect = [2]
 dof_proposal_collect = [1]
 
 M = 20000
 nb_runs = 50
 nb_iterations = 20
-
-# for d in d_collect:
-
-# loc_targ = np.random.uniform(-1, 1, d)
-# shape_targ = matrix_condition(d, cond_number)
-# inv_shape_targ = np.linalg.inv(shape_targ)
-# Z_target = normalization_Student(d, dof_targ, shape_targ)
-# # log_pi_tilde = lambda x: unnormalized_logpdf_student(x, dof, loc, inv_shape)
 
 
 log_pi_tilde = partial(unnormalized_logpdf_Student, dof=dof_targ, loc=loc_targ, inv_shape=inv_shape_targ)
