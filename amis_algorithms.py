@@ -36,27 +36,18 @@ def AMIS_student_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
 
     mu_current = mu_initial
     shape_current = shape_initial
-
-    # if D == 2:
-    #     nb_points = 100
-    #     X = np.linspace(-10, 10, nb_points)
-    #     Y = np.linspace(-10, 10, nb_points)
-
-    #     pdf = np.zeros((nb_points, nb_points))
-    #     for i in range(nb_points):
-    #         for j in range(nb_points):
-    #             pdf[i,j] = np.exp(log_pi_tilde([X[i], Y[j]]))
-
-    #     # plot
-    #     pdf = (1 / sum(pdf)) * pdf
-    #     fig, ax = plt.subplots()
-    #     ax.contour(X, Y, pdf)
+    shapes_over_iterations = []
 
     # Iterations
     for t in range(n_iterations):
 
+        # If PSD, accept, otherwise reject
+        if not np.all(np.linalg.eigvals(shape_current) > 1e-7):
+            shape_current = shapes_over_iterations[-1]
+
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
         proposals_over_iterations.append(current_proposal)
+        shapes_over_iterations.append(shape_current)
 
         # Draw M samples from current proposal
         samples_current = current_proposal.rvs(size=M)
@@ -122,7 +113,7 @@ def AMIS_student_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
         shape_current = ((dof_proposal - 2) / dof_proposal) * (
                     secnd_moment - mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
 
-    return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current,df=dof_proposal)
+    return all_estimate_Z, all_alphaESS, all_ESS
 
 
 def alpha_AMIS_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde, dof_proposal, M, D):
@@ -140,10 +131,18 @@ def alpha_AMIS_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde, 
     mu_current = mu_initial
     shape_current = shape_initial
 
+    shapes_over_iterations = []
+
     # Iterations
     for t in range(n_iterations):
+
+        # If PSD, accept, otherwise reject
+        if not np.all(np.linalg.eigvals(shape_current) > 1e-7):
+            shape_current = shapes_over_iterations[-1]
+
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
         proposals_over_iterations.append(current_proposal)
+        shapes_over_iterations.append(shape_current)
 
         # Draw M samples from current proposal
         samples_current = current_proposal.rvs(size=M)
@@ -214,7 +213,7 @@ def alpha_AMIS_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde, 
         secnd_moment = np.einsum('tm, tmd, tme -> de', W, samples_up_to_now, samples_up_to_now)
         shape_current = secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
 
-    return all_estimate_Z, all_alphaESS, all_ESS, multivariate_t(loc=mu_current, shape=shape_current,df=dof_proposal)
+    return all_estimate_Z, all_alphaESS, all_ESS
 
 
 def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde, dof_initial, M, D):
@@ -246,6 +245,8 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
     # Initial points
     latin_design = LatinDesign(dof_proposal_space)
     initial_dof_points = latin_design.get_samples(num_initial_dof_points)
+
+    shapes_over_iterations = []
 
     # Iterations
     for t in range(n_iterations):
@@ -296,8 +297,13 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
 
         # sampling and computing of the ESS
 
+        # If PSD, accept, otherwise reject
+        if not np.all(np.linalg.eigvals(shape_current) > 1e-7):
+            shape_current = shapes_over_iterations[-1]
+
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
         proposals_over_iterations.append(current_proposal)
+        shapes_over_iterations.append(shape_current)
 
         samples_current = current_proposal.rvs(size=M)  # Draw M samples from current proposal
         all_samples[t, :] = samples_current  # this adds to the existing list of samples, does not override

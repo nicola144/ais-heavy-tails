@@ -4,30 +4,63 @@ import os
 from functools import partial
 from tqdm import tqdm
 
-def run_AMIS_real_dataset(nb_runs, n_iterations, dof_proposal, M, d, alg, mu_initial, shape_initial, log_pi_tilde):
-    all_est_Z = np.empty((nb_runs,))
-    ESS = np.empty((nb_runs, ))
-    alphaESS = np.empty((nb_runs,))
+
+def run_adaptiveAMISrealdataset(nb_runs, n_iterations, dof_proposal, M, d, alg, sigmaSq_init, log_pi_tilde):
+
+    all_est_Z = np.empty((nb_runs,n_iterations))
+    ESS = np.empty((nb_runs, n_iterations))
+    alphaESS = np.empty((nb_runs, n_iterations))
+
+    dof = np.empty((nb_runs, n_iterations))
+
+    shape_initial = sigmaSq_init * np.eye(d)
 
     for i in tqdm(range(nb_runs)):
 
-        all_estimate_Z, all_alphaESS, all_ESS, adapted_proposal = alg(mu_initial=mu_initial, shape_initial=shape_initial, n_iterations=n_iterations, log_pi_tilde=log_pi_tilde, dof_proposal=dof_proposal,
+        mu_initial = np.random.uniform(-5, 5, d)
+
+        all_estimate_Z, all_alphaESS, all_ESS, all_dof = alg(mu_initial, shape_initial, n_iterations, log_pi_tilde,
+                                                             dof_proposal, M, d)
+
+
+        all_est_Z[i, :] = all_estimate_Z # only last iteration
+        ESS[i, :] = all_ESS
+        alphaESS[i, :] = all_alphaESS
+        dof[i, :] = all_dof
+
+    return all_est_Z, ESS, alphaESS, dof
+
+
+def run_AMIS_real_dataset(nb_runs, n_iterations, dof_proposal, M, d, alg, log_pi_tilde, mu_initial=None, shape_initial=None, sigmaSq_init=None):
+    all_est_Z = np.empty((nb_runs,n_iterations))
+    ESS = np.empty((nb_runs, n_iterations))
+    alphaESS = np.empty((nb_runs, n_iterations))
+
+    shape_initial = sigmaSq_init * np.identity(d)
+
+    assert np.all(np.linalg.eigvals(shape_initial) > 0)
+
+    for i in tqdm(range(nb_runs)):
+
+        mu_initial = np.random.uniform(-5,5,d)
+
+        all_estimate_Z, all_alphaESS, all_ESS = alg(mu_initial=mu_initial, shape_initial=shape_initial, n_iterations=n_iterations, log_pi_tilde=log_pi_tilde, dof_proposal=dof_proposal,
                                                     M=M, D=d)
 
 
-        all_est_Z[i] = all_estimate_Z[-1] # only last iteration
-        ESS[i] = all_ESS[-1]
-        alphaESS[i] = all_alphaESS[-1]
+        all_est_Z[i, :] = all_estimate_Z # only last iteration
+        ESS[i, :] = all_ESS
+        alphaESS[i, :] = all_alphaESS
 
-    mean_Z = all_est_Z.mean(0)
-    std_Z = all_est_Z.std(0)
-    mean_ESS = ESS.mean(0)
-    mean_alphaESS = alphaESS.mean(0)
+    # mean_Z = all_est_Z.mean(0)
+    # std_Z = all_est_Z.std(0)
+    # mean_ESS = ESS.mean(0)
+    # mean_alphaESS = alphaESS.mean(0)
+    #
+    # std_ESS = ESS.std(0)
+    # std_alphaESS = alphaESS.std(0)
 
-    std_ESS = ESS.std(0)
-    std_alphaESS = alphaESS.std(0)
-
-    return mean_Z, std_Z, mean_ESS, mean_alphaESS, std_ESS, std_alphaESS, adapted_proposal
+    return all_est_Z, ESS, alphaESS
 
 def run_AMIS(nb_runs, n_iterations, dof_proposal, M, d, alg, sigmaSq_init, log_pi_tilde, Z_target):
     MSE_Z = np.empty((nb_runs, n_iterations))
