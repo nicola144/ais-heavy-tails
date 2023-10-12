@@ -7,7 +7,7 @@ plt.rc('font', family='serif', size=18)
 plt.rc('axes', labelsize=25, titlesize=20, labelpad=20)  # Adjusting axes parameters
 plt.rc('xtick', labelsize=20)  # Adjusting xtick parameters
 plt.rc('ytick', labelsize=20)  # Adjusting ytick parameters
-plt.rc('legend', fontsize=16)  # Adjusting legend parameters
+plt.rc('legend', fontsize=12, loc='lower left')  # Adjusting legend parameters
 plt.rc('legend', handlelength=1)  # e.g., shorter lines
 
 
@@ -106,22 +106,23 @@ plt.figure()
 plt.semilogy()
 
 
-plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof1) / true_Z, label="escort AMIS, dof=1", marker="o")
-plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof2) / true_Z, label="escort AMIS, dof=2", marker="|")
-plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof3) / true_Z, label="escort AMIS, $\\nu=3$", marker="v")
-plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof5) / true_Z, label="escort AMIS, $\\nu=5$", marker="p")
+plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof1) / true_Z, label="escort AMIS, $\\nu=1$", marker="+", linestyle='-')
+plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof2) / true_Z, label="escort AMIS, $\\nu=2$", marker="*", linestyle='-')
+plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof3) / true_Z, label="escort AMIS, $\\nu=3$", marker="o", linestyle='-')
+plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof5) / true_Z, label="escort AMIS, $\\nu=5$", marker="s", linestyle='-')
 # plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof10) / true_Z, label="escort AMIS, $\\nu=1$0", marker="*")
-plt.plot(d_collect, np.sqrt(MSE_Z_AMIS_dof3) / true_Z, label="AMIS, $\\nu=3$", linestyle="dashed", marker="v")
-plt.plot(d_collect, np.sqrt(MSE_Z_AMIS_dof5) / true_Z, label="AMIS, $\\nu=5$", linestyle="dashed", marker="p")
+plt.plot(d_collect, np.sqrt(MSE_Z_AMIS_dof3) / true_Z, label="AMIS, $\\nu=3$", linestyle="--", marker="o")
+plt.plot(d_collect, np.sqrt(MSE_Z_AMIS_dof5) / true_Z, label="AMIS, $\\nu=5$", linestyle="--", marker="s")
 # plt.plot(d_collect, np.sqrt(MSE_Z_AMIS_dof10) / true_Z, label="AMIS, $\\nu=10$", linestyle="dashed", marker="*")
-plt.plot(d_collect, np.sqrt(MSE_Z_adaptive) / true_Z, label="adaptive escort AMIS", marker="x")
+plt.plot(d_collect, np.sqrt(MSE_Z_adaptive) / true_Z, label="adaptive escort AMIS", marker="D", linestyle='-')
 
-plt.legend()
+plt.legend(loc='upper left')
+plt.grid(which='both')  # showing both major and minor grid lines
 
-plt.xlabel("Dimension $d$")
-plt.ylabel("$\\sqrt{MSE}\\, /\\, Z_{\\pi}$")
+plt.xlabel(r"Dimension $d$")
+plt.ylabel(r"$\sqrt{\mathrm{MSE}} / Z_{\pi}$")
 
-plt.savefig("MSE_Z_"+targetName+".pdf",bbox_inches="tight")
+plt.savefig("synthetic_MSE_Z_"+targetName+".pdf",bbox_inches="tight")
 
 
 
@@ -143,19 +144,19 @@ plt.fill_between(d_collect, alphaESS_mean_AMIS_dof5 - alphaESS_std_AMIS_dof5, al
 plt.fill_between(d_collect, alphaESS_mean_adaptive - alphaESS_std_adaptive, alphaESS_mean_adaptive + alphaESS_std_adaptive, alpha=0.2)
 
 
-plt.plot(d_collect, alphaESS_mean_escortAMIS_dof1, label="escort AMIS, $\\nu=1$", marker="o")
-plt.plot(d_collect, alphaESS_mean_escortAMIS_dof2, label="escort AMIS, $\\nu=2$", marker="|")
-plt.plot(d_collect, alphaESS_mean_escortAMIS_dof3, label="escort AMIS, $\\nu=3$", marker="v")
-plt.plot(d_collect, alphaESS_mean_escortAMIS_dof5, label="escort AMIS, $\\nu=5$", marker="p")
+plt.plot(d_collect, alphaESS_mean_escortAMIS_dof1, label="escort AMIS, $\\nu=1$", marker="+", linestyle="-")
+plt.plot(d_collect, alphaESS_mean_escortAMIS_dof2, label="escort AMIS, $\\nu=2$", marker="*", linestyle="-")
+plt.plot(d_collect, alphaESS_mean_escortAMIS_dof3, label="escort AMIS, $\\nu=3$", marker="o", linestyle="-")
+plt.plot(d_collect, alphaESS_mean_escortAMIS_dof5, label="escort AMIS, $\\nu=5$", marker="s", linestyle="-")
 # plt.plot(d_collect, alphaESS_mean_escortAMIS_dof10, label="escort AMIS, $\\nu=1$0", marker="*")
-plt.plot(d_collect, alphaESS_mean_AMIS_dof3, label="AMIS, $\\nu=3$", linestyle="dashed", marker="v")
-plt.plot(d_collect, alphaESS_mean_AMIS_dof5, label="AMIS, $\\nu=5$", linestyle="dashed", marker="p")
+plt.plot(d_collect, alphaESS_mean_AMIS_dof3, label="AMIS, $\\nu=3$", linestyle="--", marker="o")
+plt.plot(d_collect, alphaESS_mean_AMIS_dof5, label="AMIS, $\\nu=5$", linestyle="--", marker="s")
 # plt.plot(d_collect, alphaESS_mean_AMIS_dof10, label="AMIS, $\\nu=10$", linestyle="dashed", marker="*")
-plt.plot(d_collect, alphaESS_mean_adaptive, label="adaptive escort AMIS", marker="x")
+plt.plot(d_collect, alphaESS_mean_adaptive, label="adaptive escort AMIS", marker="D", linestyle="-")
 
 plt.legend()
-
+plt.grid(which='both')  # showing both major and minor grid lines
 plt.xlabel("Dimension $d$")
 plt.ylabel("$\\alpha$-ESS")
 
-plt.savefig("alphaESS_"+targetName+".pdf",bbox_inches="tight")
+plt.savefig("synthetic_alphaESS_"+targetName+".pdf",bbox_inches="tight")

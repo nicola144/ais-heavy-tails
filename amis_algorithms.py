@@ -259,7 +259,20 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
             else:
                 if gpy_model is None:
                     # declare model
+                    # Added : hyperparameter optimization
+                    prior_len = GPy.core.parameterization.priors.InverseGamma.from_EV(2, 1)
+                    prior_sigma_f = GPy.core.parameterization.priors.InverseGamma.from_EV(3, 1)
+                    prior_lik = GPy.core.parameterization.priors.InverseGamma.from_EV(1, 0.5)
+
                     gpy_model = GPy.models.GPRegression(observed_dof.reshape(-1, 1), observed_ess.reshape(-1, 1))
+                    gpy_model.kern.lengthscale.set_prior(prior_len, warning=False)
+                    gpy_model.kern.variance.set_prior(prior_sigma_f, warning=False)
+                    gpy_model.likelihood.variance.set_prior(prior_lik, warning=False)
+
+                    # gpy_model.kern.lengthscale.fix(warning=False)
+                    # gpy_model.kern.variance.fix(warning=False)
+                    # gpy_model.likelihood.variance.fix(warning=False)
+
                     emukit_model = GPyModelWrapper(gpy_model)
 
                 else:
@@ -281,6 +294,8 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
                 x_new, _ = optimizer.optimize(acquisition)
 
                 dof_proposal = x_new.item()
+                # Added: hyperparameter optimization
+                emukit_model.optimize()
 
         alpha = 1 + 2 / (dof_proposal + D)
 
