@@ -7,8 +7,28 @@ plt.rc('font', family='serif', size=18)
 plt.rc('axes', labelsize=25, titlesize=20, labelpad=20)  # Adjusting axes parameters
 plt.rc('xtick', labelsize=20)  # Adjusting xtick parameters
 plt.rc('ytick', labelsize=20)  # Adjusting ytick parameters
-plt.rc('legend', fontsize=12, loc='lower left')  # Adjusting legend parameters
-plt.rc('legend', handlelength=1)  # e.g., shorter lines
+plt.rc('legend', handlelength=2)  # e.g., shorter lines
+plt.rc('lines', markersize=8)  # Replace 10 with your desired size
+
+# default_figsize = plt.rcParams['figure.figsize']
+
+# Function to manage colors per marker type
+def get_color_for_marker(marker, marker_to_color, color_cycle):
+    if marker not in marker_to_color:
+        try:
+            new_color = next(color_cycle)
+        except StopIteration:
+            # Restart the color cycle if it has ended
+            color_cycle = iter(plt.rcParams['axes.prop_cycle'].by_key()['color'])
+            new_color = next(color_cycle)
+        marker_to_color[marker] = new_color
+    return marker_to_color[marker]
+
+
+# Prepare the color cycle and marker-color mapping
+color_cycle = iter(plt.rcParams['axes.prop_cycle'].by_key()['color'])
+marker_to_color = {}
+
 
 
 d_collect = [2,4,8,16]
@@ -102,21 +122,46 @@ MSE_Z_AMIS_dof10 = np.array([5.241437234267612086e-03, 8.462517690205006993e-01,
 
 # MSE plotting
 
-plt.figure()
+fig = plt.figure()
 plt.semilogy()
 
+marker = 'X'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof1) / true_Z, label="AHTIS with fixed $\\nu$, $\\nu=1$", marker=marker, linestyle='-', color=color)
 
-plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof1) / true_Z, label="escort AMIS, $\\nu=1$", marker="+", linestyle='-')
-plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof2) / true_Z, label="escort AMIS, $\\nu=2$", marker="*", linestyle='-')
-plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof3) / true_Z, label="escort AMIS, $\\nu=3$", marker="o", linestyle='-')
-plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof5) / true_Z, label="escort AMIS, $\\nu=5$", marker="s", linestyle='-')
-# plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof10) / true_Z, label="escort AMIS, $\\nu=1$0", marker="*")
-plt.plot(d_collect, np.sqrt(MSE_Z_AMIS_dof3) / true_Z, label="AMIS, $\\nu=3$", linestyle="--", marker="o")
-plt.plot(d_collect, np.sqrt(MSE_Z_AMIS_dof5) / true_Z, label="AMIS, $\\nu=5$", linestyle="--", marker="s")
+marker = '*'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof2) / true_Z, label="AHTIS with fixed $\\nu$, $\\nu=2$", marker=marker, linestyle='-', color=color)
+
+marker = 'o'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof3) / true_Z, label="AHTIS with fixed $\\nu$, $\\nu=3$", marker=marker, linestyle='-', color=color)
+
+marker = 's'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof5) / true_Z, label="AHTIS with fixed $\\nu$, $\\nu=5$", marker=marker, linestyle='-', color=color)
+
+# plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof10) / true_Z, label="AHTIS with fixed $\\nu$, $\\nu=1$0", marker="*")
+
+marker = 'o'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, np.sqrt(MSE_Z_AMIS_dof3) / true_Z, label="AMIS, $\\nu=3$", linestyle="--", marker=marker, color=color)
+
+marker = 's'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, np.sqrt(MSE_Z_AMIS_dof5) / true_Z, label="AMIS, $\\nu=5$", linestyle="--", marker="s", color=color)
+
 # plt.plot(d_collect, np.sqrt(MSE_Z_AMIS_dof10) / true_Z, label="AMIS, $\\nu=10$", linestyle="dashed", marker="*")
-plt.plot(d_collect, np.sqrt(MSE_Z_adaptive) / true_Z, label="adaptive escort AMIS", marker="D", linestyle='-')
 
-plt.legend(loc='upper left')
+marker = 'D'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, np.sqrt(MSE_Z_adaptive) / true_Z, label="AHTIS", marker=marker, linestyle='-', color=color)
+
+plt.xticks(d_collect)
+
+# plt.legend(loc='upper left')
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.45), ncol=2)
+
 plt.grid(which='both')  # showing both major and minor grid lines
 
 plt.xlabel(r"Dimension $d$")
@@ -128,35 +173,64 @@ plt.savefig("synthetic_MSE_Z_"+targetName+".pdf",bbox_inches="tight")
 
 # alpha ESS plotting
 
-plt.figure()
+fig = plt.figure()
 plt.semilogy()
 
-plt.fill_between(d_collect, alphaESS_mean_escortAMIS_dof1 - alphaESS_std_escortAMIS_dof1, alphaESS_mean_escortAMIS_dof1 + alphaESS_std_escortAMIS_dof1, alpha=0.2)
-plt.fill_between(d_collect, alphaESS_mean_escortAMIS_dof2 - alphaESS_std_escortAMIS_dof2, alphaESS_mean_escortAMIS_dof2 + alphaESS_std_escortAMIS_dof2, alpha=0.2)
-plt.fill_between(d_collect, alphaESS_mean_escortAMIS_dof3 - alphaESS_std_escortAMIS_dof3, alphaESS_mean_escortAMIS_dof3 + alphaESS_std_escortAMIS_dof3, alpha=0.2)
-plt.fill_between(d_collect, alphaESS_mean_escortAMIS_dof5 - alphaESS_std_escortAMIS_dof5, alphaESS_mean_escortAMIS_dof5 + alphaESS_std_escortAMIS_dof5, alpha=0.2)
+
+
+
+marker = 'X'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, alphaESS_mean_escortAMIS_dof1, label="AHTIS with fixed $\\nu$, $\\nu=1$", marker=marker, linestyle="-",color=color)
+plt.fill_between(d_collect, alphaESS_mean_escortAMIS_dof1 - alphaESS_std_escortAMIS_dof1, alphaESS_mean_escortAMIS_dof1 + alphaESS_std_escortAMIS_dof1, alpha=0.2, color=color)
+
+marker = '*'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, alphaESS_mean_escortAMIS_dof2, label="AHTIS with fixed $\\nu$, $\\nu=2$", marker=marker, linestyle="-",color=color)
+plt.fill_between(d_collect, alphaESS_mean_escortAMIS_dof2 - alphaESS_std_escortAMIS_dof2, alphaESS_mean_escortAMIS_dof2 + alphaESS_std_escortAMIS_dof2, alpha=0.2, color=color)
+
+marker = 'o'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, alphaESS_mean_escortAMIS_dof3, label="AHTIS with fixed $\\nu$, $\\nu=3$", marker=marker, linestyle="-",color=color)
+plt.fill_between(d_collect, alphaESS_mean_escortAMIS_dof3 - alphaESS_std_escortAMIS_dof3, alphaESS_mean_escortAMIS_dof3 + alphaESS_std_escortAMIS_dof3, alpha=0.2, color=color)
+
+marker = 's'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, alphaESS_mean_escortAMIS_dof5, label="AHTIS with fixed $\\nu$, $\\nu=5$", marker=marker, linestyle="-",color=color)
+plt.fill_between(d_collect, alphaESS_mean_escortAMIS_dof5 - alphaESS_std_escortAMIS_dof5, alphaESS_mean_escortAMIS_dof5 + alphaESS_std_escortAMIS_dof5, alpha=0.2, color=color)
+
+# plt.plot(d_collect, alphaESS_mean_escortAMIS_dof10, label="AHTIS with fixed $\\nu$, $\\nu=1$0", marker="*")
+
+marker = 'o'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, alphaESS_mean_AMIS_dof3, label="AMIS, $\\nu=3$", linestyle="--", marker=marker,color=color)
+plt.fill_between(d_collect, alphaESS_mean_AMIS_dof3 - alphaESS_std_AMIS_dof3, alphaESS_mean_AMIS_dof3 + alphaESS_std_AMIS_dof3, alpha=0.2, color=color)
+
+marker = 's'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, alphaESS_mean_AMIS_dof5, label="AMIS, $\\nu=5$", linestyle="--", marker=marker,color=color)
+plt.fill_between(d_collect, alphaESS_mean_AMIS_dof5 - alphaESS_std_AMIS_dof5, alphaESS_mean_AMIS_dof5 + alphaESS_std_AMIS_dof5, alpha=0.2, color=color)
+
+# plt.plot(d_collect, alphaESS_mean_AMIS_dof10, label="AMIS, $\\nu=10$", linestyle="dashed", marker="*")
+
+
 # plt.fill_between(d_collect, alphaESS_mean_escortAMIS_dof10 - alphaESS_std_escortAMIS_dof10, alphaESS_mean_escortAMIS_dof10 + alphaESS_std_escortAMIS_dof10, alpha=0.2)
 
-plt.fill_between(d_collect, alphaESS_mean_AMIS_dof3 - alphaESS_std_AMIS_dof3, alphaESS_mean_AMIS_dof3 + alphaESS_std_AMIS_dof3, alpha=0.2)
-plt.fill_between(d_collect, alphaESS_mean_AMIS_dof5 - alphaESS_std_AMIS_dof5, alphaESS_mean_AMIS_dof5 + alphaESS_std_AMIS_dof5, alpha=0.2)
 # plt.fill_between(d_collect, alphaESS_mean_AMIS_dof10 - alphaESS_std_AMIS_dof10, alphaESS_mean_AMIS_dof10 + alphaESS_std_AMIS_dof10, alpha=0.2)
 
+
+
+marker = 'D'
+color = get_color_for_marker(marker, marker_to_color, color_cycle)
+plt.plot(d_collect, alphaESS_mean_adaptive, label="AHTIS", marker=marker, linestyle="-",color=color)
 plt.fill_between(d_collect, alphaESS_mean_adaptive - alphaESS_std_adaptive, alphaESS_mean_adaptive + alphaESS_std_adaptive, alpha=0.2)
 
-
-plt.plot(d_collect, alphaESS_mean_escortAMIS_dof1, label="escort AMIS, $\\nu=1$", marker="+", linestyle="-")
-plt.plot(d_collect, alphaESS_mean_escortAMIS_dof2, label="escort AMIS, $\\nu=2$", marker="*", linestyle="-")
-plt.plot(d_collect, alphaESS_mean_escortAMIS_dof3, label="escort AMIS, $\\nu=3$", marker="o", linestyle="-")
-plt.plot(d_collect, alphaESS_mean_escortAMIS_dof5, label="escort AMIS, $\\nu=5$", marker="s", linestyle="-")
-# plt.plot(d_collect, alphaESS_mean_escortAMIS_dof10, label="escort AMIS, $\\nu=1$0", marker="*")
-plt.plot(d_collect, alphaESS_mean_AMIS_dof3, label="AMIS, $\\nu=3$", linestyle="--", marker="o")
-plt.plot(d_collect, alphaESS_mean_AMIS_dof5, label="AMIS, $\\nu=5$", linestyle="--", marker="s")
-# plt.plot(d_collect, alphaESS_mean_AMIS_dof10, label="AMIS, $\\nu=10$", linestyle="dashed", marker="*")
-plt.plot(d_collect, alphaESS_mean_adaptive, label="adaptive escort AMIS", marker="D", linestyle="-")
-
-plt.legend()
+plt.xticks(d_collect)
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.45), ncol=2)
 plt.grid(which='both')  # showing both major and minor grid lines
 plt.xlabel("Dimension $d$")
 plt.ylabel("$\\alpha$-ESS")
+
+print(fig.get_size_inches())
 
 plt.savefig("synthetic_alphaESS_"+targetName+".pdf",bbox_inches="tight")

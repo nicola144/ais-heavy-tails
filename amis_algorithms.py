@@ -11,12 +11,12 @@ from scipy.stats import multivariate_normal, multivariate_t, random_correlation
 from emukit.bayesian_optimization.loops import BayesianOptimizationLoop
 
 from emukit.core import ContinuousParameter, InformationSourceParameter, ParameterSpace
-from emukit.core.optimization import GradientAcquisitionOptimizer
+from emukit.core.optimization import GradientAcquisitionOptimizer, RandomSearchAcquisitionOptimizer
 from emukit.core.initial_designs import RandomDesign
 from GPy.models import GPRegression
 from emukit.model_wrappers import GPyModelWrapper
 from emukit.bayesian_optimization.acquisitions import ExpectedImprovement, MaxValueEntropySearch, \
-    NegativeLowerConfidenceBound
+    NegativeLowerConfidenceBound, EntropySearch
 import GPy
 from emukit.core.initial_designs.latin_design import LatinDesign
 from functools import partial
@@ -42,7 +42,7 @@ def AMIS_student_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
     for t in range(n_iterations):
 
         # If PSD, accept, otherwise reject
-        if not np.all(np.linalg.eigvals(shape_current) > 1e-7):
+        if not np.all(np.linalg.eigvals(shape_current) >  1e-7):
             shape_current = shapes_over_iterations[-1]
 
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
@@ -137,7 +137,7 @@ def alpha_AMIS_fixed_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde, 
     for t in range(n_iterations):
 
         # If PSD, accept, otherwise reject
-        if not np.all(np.linalg.eigvals(shape_current) > 1e-7):
+        if not np.all(np.linalg.eigvals(shape_current) >   1e-7):
             shape_current = shapes_over_iterations[-1]
 
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
@@ -233,7 +233,7 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
 
     # Range DOF from 1 to 10
     dof_proposal_space = ParameterSpace([ContinuousParameter('dof_proposal', 1, 10)])
-    num_initial_dof_points = 5
+    num_initial_dof_points = 10
 
     observed_dof = np.array([])
     observed_ess = np.array([])
@@ -260,11 +260,13 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
                 if gpy_model is None:
                     # declare model
                     # Added : hyperparameter optimization
-                    prior_len = GPy.core.parameterization.priors.InverseGamma.from_EV(2, 1)
-                    prior_sigma_f = GPy.core.parameterization.priors.InverseGamma.from_EV(3, 1)
-                    prior_lik = GPy.core.parameterization.priors.InverseGamma.from_EV(1, 0.5)
+
+                    prior_len = GPy.core.parameterization.priors.InverseGamma.from_EV(5, 2)
+                    prior_sigma_f = GPy.core.parameterization.priors.InverseGamma.from_EV(5, 2)
+                    prior_lik = GPy.core.parameterization.priors.InverseGamma.from_EV(3, 2)
 
                     gpy_model = GPy.models.GPRegression(observed_dof.reshape(-1, 1), observed_ess.reshape(-1, 1))
+
                     gpy_model.kern.lengthscale.set_prior(prior_len, warning=False)
                     gpy_model.kern.variance.set_prior(prior_sigma_f, warning=False)
                     gpy_model.likelihood.variance.set_prior(prior_lik, warning=False)
@@ -278,22 +280,39 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
                 else:
                     emukit_model.set_data(observed_dof.reshape(-1, 1), observed_ess.reshape(-1, 1))  # update
 
-                # gpy_model.kern.lengthscale.fix(0.5) #dummy values for now
-                # gpy_model.kern.variance.fix(1e-1)
-                # gpy_model.likelihood.variance.fix(1e-1)
 
-                # gpy_model.plot()
-                # plt.show()
+                # if t == 24:
+                #     print('iteration', t)
+                #     print('dof proposal', dof_proposal)
+                #     # print('observed dof', observed_dof)
+                #     # print('observed ess', observed_ess)
+                #     gpy_model.plot()
+                #     plt.show()
 
-                beta_param = 2 * np.log((t ** 2 + 1) * 10 / np.sqrt(2 * np.pi))  # from Garnett2023 p 229
+                # Trying slightly higher beta for more exploration
+                beta_param =  1.5 * np.sqrt(2 * np.log((t ** 2 + 1) * 10 / np.sqrt(2 * np.pi)))  # from Garnett2023 p 229
 
                 acquisition = NegativeLowerConfidenceBound(emukit_model,
                                                            beta=beta_param)  # high beta => exploration, while small beta => exploitation
 
                 optimizer = GradientAcquisitionOptimizer(dof_proposal_space)
+
+                # Exp improvement
+                # acquisition = ExpectedImprovement(emukit_model)
+                #
+                # optimizer = GradientAcquisitionOptimizer(dof_proposal_space)
+
+                # # Using Entropy Search as the acquisition function
+                # acquisition = EntropySearch(emukit_model,space=dof_proposal_space)
+                #
+                # # Using Random Search as the optimizer
+                # optimizer = RandomSearchAcquisitionOptimizer(dof_proposal_space)
+
+                # Optimizing the acquisition function to find the next point for evaluation
                 x_new, _ = optimizer.optimize(acquisition)
 
                 dof_proposal = x_new.item()
+
                 # Added: hyperparameter optimization
                 emukit_model.optimize()
 
@@ -313,7 +332,8 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
         # sampling and computing of the ESS
 
         # If PSD, accept, otherwise reject
-        if not np.all(np.linalg.eigvals(shape_current) > 1e-7):
+        if not np.all(np.linalg.eigvals(shape_current) >   1e-7):
+            print('not PSD')
             shape_current = shapes_over_iterations[-1]
 
         current_proposal = multivariate_t(loc=mu_current, shape=shape_current, df=dof_proposal)
