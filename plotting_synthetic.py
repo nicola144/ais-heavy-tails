@@ -173,7 +173,8 @@ plt.grid(which='both')  # showing both major and minor grid lines
 
 plt.xlabel(r"Dimension $d$")
 plt.ylabel(r"$\sqrt{\mathrm{MSE}} / Z_{\pi}$")
-# plt.tight_layout()
+plt.tight_layout()
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.45), ncol=2)
 
 plt.savefig("synthetic_MSE_Z_"+targetName+".pdf",bbox_inches="tight")
 
@@ -244,7 +245,8 @@ plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.6), ncol=2)
 plt.grid(which='both')  # showing both major and minor grid lines
 plt.xlabel(r"Dimension $d$")
 plt.ylabel(r"$\alpha$-ESS")
-# plt.tight_layout()
+plt.tight_layout()
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.45), ncol=2)
 
 print(fig.get_size_inches())
 
@@ -480,7 +482,7 @@ marker_to_color = {}
 from matplotlib.ticker import MultipleLocator
 
 fig = plt.figure()
-fig.set_size_inches((1.3 * 6.4, 1.3 * 4.8))
+fig.set_size_inches(( 6.4, 4.8))
 
 # plt.rc('font', family='serif', size=18)
 # plt.rc('axes', labelsize=25, titlesize=20, labelpad=20)  # Adjusting axes parameters
@@ -624,8 +626,8 @@ plt.xticks(fontsize=30)
 plt.yticks(fontsize=30)
 
 # plt.axhline(y=truth, color='r', linestyle='solid', lw=2, label=r'AMIS with $10^5$ samples (dof=5)')
-# plt.tight_layout()
-# plt.yscale('log')
+plt.tight_layout()
+plt.grid(which='both')  # showing both major and minor grid lines
 plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.47), ncol=2)
 plt.savefig('./results/creatinine_alphaESS.pdf',bbox_inches='tight')
 
@@ -713,7 +715,7 @@ for key, value in loaded_dataOld.items():
 
 
 fig = plt.figure()
-fig.set_size_inches((1.3 * 6.4, 1.3 * 4.8))
+fig.set_size_inches(( 6.4, 4.8))
 
 # Best DOF it seems
 truth_key = '100000'
@@ -828,13 +830,15 @@ plt.plot(sorted_numsamples_baseline, sqrt_rel_mse_ours_adapted, label='AHTIS', m
 
 plt.xlabel('Number of samples', fontsize=35)
 plt.ylabel(r"$\sqrt{\mathrm{MSE}} / Z_{\pi}$", fontsize=35)
-# plt.tight_layout()
+plt.tight_layout()
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.45), ncol=2)
+plt.grid(which='both')  # showing both major and minor grid lines
 
 plt.yscale('log')
 plt.xticks(fontsize=30)
 plt.yticks(fontsize=30)
 
-plt.grid(axis='y',which='both')  # showing both major and minor grid lines
+plt.grid(which='both')  # showing both major and minor grid lines
 
 plt.tick_params(axis='y', which='minor')
 ax.yaxis.set_minor_formatter(FormatStrFormatter("%.1f"))
