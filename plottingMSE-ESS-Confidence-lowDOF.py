@@ -2,9 +2,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
+plt.rc('text', usetex=True)
+
+plt.rc('font', family='serif', size=22)
+plt.rc('axes', labelsize=30, titlesize=20, labelpad=20)  # Adjusting axes parameters
+plt.rc('xtick', labelsize=25)  # Adjusting xtick parameters
+plt.rc('ytick', labelsize=25)  # Adjusting ytick parameters
+plt.rc('legend', handlelength=2)  # e.g., shorter lines
+plt.rc('lines', markersize=8)  # Replace 10 with your desired size
+plt.rc('figure', figsize=(1.3 * 6.4, 1.3 * 4.8))  # For example, setting the figure size to 10 inches by 6 inches
 
 conditionNumber = 5
-dofTarg = 5
+dofTarg = 2
 targetName = "dofTarget"+str(dofTarg)
 
 dimensionCollect = [2,4,8,16,32]
@@ -134,7 +143,6 @@ conf_ub_adaptive = algCollect[index_adaptive]['conf_ub']
 plt.figure()
 plt.semilogy()
 
-
 plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof1) / true_Z, label="escort AMIS, $\\nu=1$", marker="o")
 plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof2) / true_Z, label="escort AMIS, $\\nu=2$", marker="|")
 plt.plot(d_collect, np.sqrt(MSE_Z_escortAMIS_dof3) / true_Z, label="escort AMIS, $\\nu=3$", marker="v")
@@ -149,6 +157,10 @@ plt.legend()
 
 plt.xlabel("Dimension $d$")
 plt.ylabel("$\\sqrt{MSE}\\, /\\, Z_{\\pi}$")
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.45), ncol=2)
+
+plt.grid(which='both')  # showing both major and minor grid lines
+
 
 plt.savefig("MSE_Z_"+targetName+".pdf",bbox_inches="tight")
 
@@ -186,6 +198,10 @@ plt.legend()
 
 plt.xlabel("Dimension $d$")
 plt.ylabel("$\\alpha$-ESS")
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.45), ncol=2)
+
+plt.grid(which='both')  # showing both major and minor grid lines
+
 
 plt.savefig("alphaESS_"+targetName+".pdf",bbox_inches="tight")
 
@@ -211,7 +227,11 @@ plt.fill_between(d_collect, conf_lb_adaptive / true_Z, conf_ub_adaptive / true_Z
 plt.legend(loc='lower left')
 
 plt.xlabel("Dimension $d$")
-plt.ylabel("Confidence intervals")
+plt.ylabel(r" Interval: $[\widehat{L}/Z_{\pi}, \widehat{U}/Z_{\pi}$ ] ")
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.45), ncol=2)
+
+plt.grid(which='both')  # showing both major and minor grid lines
+
 
 plt.savefig("confidenceIntervals_"+targetName+".pdf",bbox_inches="tight")
 
