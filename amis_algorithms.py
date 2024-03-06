@@ -231,9 +231,9 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
     gpy_model = None
     emukit_model = None
 
-    # Range DOF from 1 to 10
-    dof_proposal_space = ParameterSpace([ContinuousParameter('dof_proposal', 1, 10)])
-    num_initial_dof_points = 10
+    # Range DOF from 1 to 10; to 5 for new experiment
+    dof_proposal_space = ParameterSpace([ContinuousParameter('dof_proposal', 2., 4.)])
+    num_initial_dof_points = 3
 
     observed_dof = np.array([])
     observed_ess = np.array([])
@@ -250,6 +250,7 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
 
     # Iterations
     for t in range(n_iterations):
+        print('dof proposal', dof_proposal)
 
         # adaptation of the dof
         if t > 0:
@@ -261,9 +262,9 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
                     # declare model
                     # Added : hyperparameter optimization
 
-                    prior_len = GPy.core.parameterization.priors.InverseGamma.from_EV(5, 2)
-                    prior_sigma_f = GPy.core.parameterization.priors.InverseGamma.from_EV(5, 2)
-                    prior_lik = GPy.core.parameterization.priors.InverseGamma.from_EV(3, 2)
+                    prior_len = GPy.core.parameterization.priors.InverseGamma.from_EV(5, .5)
+                    prior_sigma_f = GPy.core.parameterization.priors.InverseGamma.from_EV(1, .5)
+                    prior_lik = GPy.core.parameterization.priors.InverseGamma.from_EV(1, .5)
 
                     gpy_model = GPy.models.GPRegression(observed_dof.reshape(-1, 1), observed_ess.reshape(-1, 1))
 
@@ -289,8 +290,7 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
                 #     gpy_model.plot()
                 #     plt.show()
 
-                # Trying slightly higher beta for more exploration
-                beta_param =  1.5 * np.sqrt(2 * np.log((t ** 2 + 1) * 10 / np.sqrt(2 * np.pi)))  # from Garnett2023 p 229
+                beta_param = np.sqrt(2 * np.log((t ** 2 + 1) * 10 / np.sqrt(2 * np.pi)))  # from Garnett2023 p 229
 
                 acquisition = NegativeLowerConfidenceBound(emukit_model,
                                                            beta=beta_param)  # high beta => exploration, while small beta => exploitation
@@ -329,10 +329,13 @@ def alpha_AMIS_adapted_dof(mu_initial, shape_initial, n_iterations, log_pi_tilde
             secnd_moment = np.einsum('tm, tmd, tme -> de', W, samples_up_to_now, samples_up_to_now)
             shape_current = secnd_moment - (mu_current.reshape(-1, 1) @ mu_current.reshape(1, -1))
 
+            if not np.isfinite(shape_current).all():
+                print('shape not finite')
+                shape_current = shapes_over_iterations[-1]
         # sampling and computing of the ESS
 
         # If PSD, accept, otherwise reject
-        if not np.all(np.linalg.eigvals(shape_current) >   1e-7):
+        if not np.all(np.linalg.eigvals(shape_current) > 1e-7):
             print('not PSD')
             shape_current = shapes_over_iterations[-1]
 
